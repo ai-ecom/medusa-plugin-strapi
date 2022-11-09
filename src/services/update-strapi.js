@@ -5,14 +5,14 @@ const IGNORE_THRESHOLD = 3 // seconds
 
 class UpdateStrapiService extends BaseService {
   constructor(
-    {
-      regionService,
-      productService,
-      redisClient,
-      productVariantService,
-      eventBusService,
-    },
-    options
+      {
+        regionService,
+        productService,
+        redisClient,
+        productVariantService,
+        eventBusService,
+      },
+      options
   ) {
     super()
 
@@ -45,10 +45,10 @@ class UpdateStrapiService extends BaseService {
   async addIgnore_(id, side) {
     const key = `${id}_ignore_${side}`
     return await this.redis_.set(
-      key,
-      1,
-      "EX",
-      this.options_.ignore_threshold || IGNORE_THRESHOLD
+        key,
+        1,
+        "EX",
+        this.options_.ignore_threshold || IGNORE_THRESHOLD
     )
   }
 
@@ -73,16 +73,16 @@ class UpdateStrapiService extends BaseService {
 
   async createImageAssets(product) {
     const assets = await Promise.all(
-      product.images
-        .filter((image) => image.url !== product.thumbnail)
-        .map(async (image, i) => {
-          const result = await this.createEntryInStrapi("images", product.id, {
-            image_id: image.id,
-            url: image.url,
-            metadata: image.metadata || {},
-          })
-          return result.image
-        })
+        product.images
+            .filter((image) => image.url !== product.thumbnail)
+            .map(async (image, i) => {
+              const result = await this.createEntryInStrapi("images", product.id, {
+                image_id: image.id,
+                url: image.url,
+                metadata: image.metadata || {},
+              })
+              return result.image
+            })
     )
     return assets || []
   }
@@ -98,12 +98,12 @@ class UpdateStrapiService extends BaseService {
   }
 
   async createProductInStrapi(productId) {
-    const hasType = await this.getType("products")
-      .then(() => true)
-      .catch((err) => {
-        // console.log(err)
-        return false
-      })
+    const hasType = await this.getType(this.options_.strapi_product_collection_name)
+        .then(() => true)
+        .catch((err) => {
+          // console.log(err)
+          return false
+        })
     if (!hasType) {
       return Promise.resolve()
     }
@@ -143,7 +143,7 @@ class UpdateStrapiService extends BaseService {
       })
 
       if (product) {
-        return await this.createEntryInStrapi("products", productId, product)
+        return await this.createEntryInStrapi(this.options_.strapi_product_collection_name, productId, product)
       }
     } catch (error) {
       throw error
@@ -151,9 +151,9 @@ class UpdateStrapiService extends BaseService {
   }
 
   async createProductVariantInStrapi(variantId) {
-    const hasType = await this.getType("product-variants")
-      .then(() => true)
-      .catch(() => false)
+    const hasType = await this.getType(this.options_.strapi_product_variant_collection_name)
+        .then(() => true)
+        .catch(() => false)
 
     if (!hasType) {
       return Promise.resolve()
@@ -168,9 +168,9 @@ class UpdateStrapiService extends BaseService {
       // console.log(variant)
       if (variant) {
         return await this.createEntryInStrapi(
-          "product-variants",
-          variantId,
-          variant
+            this.options_.strapi_product_variant_collection_name,
+            variantId,
+            variant
         )
       }
     } catch (error) {
@@ -179,9 +179,9 @@ class UpdateStrapiService extends BaseService {
   }
 
   async createRegionInStrapi(regionId) {
-    const hasType = await this.getType("regions")
-      .then(() => true)
-      .catch(() => false)
+    const hasType = await this.getType(this.options_.strapi_regions_collection_name)
+        .then(() => true)
+        .catch(() => false)
     if (!hasType) {
       console.log('Type "Regions" doesnt exist in Strapi')
       return Promise.resolve()
@@ -201,22 +201,22 @@ class UpdateStrapiService extends BaseService {
 
       // console.log(region)
 
-      return await this.createEntryInStrapi("regions", regionId, region)
+      return await this.createEntryInStrapi(this.options_.strapi_regions_collection_name, regionId, region)
     } catch (error) {
       throw error
     }
   }
 
   async updateRegionInStrapi(data) {
-    const hasType = await this.getType("regions")
-      .then((res) => {
-        // console.log(res.data)
-        return true
-      })
-      .catch((error) => {
-        // console.log(error.response.status)
-        return false
-      })
+    const hasType = await this.getType(this.options_.strapi_regions_collection_name)
+        .then((res) => {
+          // console.log(res.data)
+          return true
+        })
+        .catch((error) => {
+          // console.log(error.response.status)
+          return false
+        })
     if (!hasType) {
       return Promise.resolve()
     }
@@ -256,9 +256,9 @@ class UpdateStrapiService extends BaseService {
       if (region) {
         // Update entry in Strapi
         const response = await this.updateEntryInStrapi(
-          "regions",
-          region.id,
-          region
+            this.options_.strapi_regions_collection_name,
+            region.id,
+            region
         )
         console.log("Region Strapi Id - ", response)
       }
@@ -270,15 +270,15 @@ class UpdateStrapiService extends BaseService {
   }
 
   async updateProductInStrapi(data) {
-    const hasType = await this.getType("products")
-      .then((res) => {
-        // console.log(res.data)
-        return true
-      })
-      .catch((error) => {
-        // console.log(error.response.status)
-        return false
-      })
+    const hasType = await this.getType(this.options_.strapi_product_collection_name)
+        .then((res) => {
+          // console.log(res.data)
+          return true
+        })
+        .catch((error) => {
+          // console.log(error.response.status)
+          return false
+        })
     if (!hasType) {
       return Promise.resolve()
     }
@@ -309,7 +309,7 @@ class UpdateStrapiService extends BaseService {
       const ignore = await this.shouldIgnore_(data.id, "strapi")
       if (ignore) {
         console.log(
-          "Strapi has just updated this product which triggered this function. IGNORING... "
+            "Strapi has just updated this product which triggered this function. IGNORING... "
         )
         return Promise.resolve()
       }
@@ -347,7 +347,7 @@ class UpdateStrapiService extends BaseService {
       })
 
       if (product) {
-        await this.updateEntryInStrapi("products", product.id, product)
+        await this.updateEntryInStrapi(this.options_.strapi_product_collection_name, product.id, product)
       }
 
       return product
@@ -357,15 +357,15 @@ class UpdateStrapiService extends BaseService {
   }
 
   async updateProductVariantInStrapi(data) {
-    const hasType = await this.getType("product-variants")
-      .then((res) => {
-        // console.log(res.data)
-        return true
-      })
-      .catch((error) => {
-        // console.log(error.response.status)
-        return false
-      })
+    const hasType = await this.getType(this.options_.strapi_product_variant_collection_name)
+        .then((res) => {
+          // console.log(res.data)
+          return true
+        })
+        .catch((error) => {
+          // console.log(error.response.status)
+          return false
+        })
     if (!hasType) {
       return Promise.resolve()
     }
@@ -406,9 +406,9 @@ class UpdateStrapiService extends BaseService {
       if (variant) {
         // Update entry in Strapi
         const response = await this.updateEntryInStrapi(
-          "product-variants",
-          variant.id,
-          variant
+            this.options_.strapi_product_variant_collection_name,
+            variant.id,
+            variant
         )
         console.log("Variant Strapi Id - ", response)
       }
@@ -421,12 +421,12 @@ class UpdateStrapiService extends BaseService {
   }
 
   async deleteProductInStrapi(data) {
-    const hasType = await this.getType("products")
-      .then(() => true)
-      .catch((err) => {
-        // console.log(err)
-        return false
-      })
+    const hasType = await this.getType(this.options_.strapi_product_collection_name)
+        .then(() => true)
+        .catch((err) => {
+          // console.log(err)
+          return false
+        })
     if (!hasType) {
       return Promise.resolve()
     }
@@ -436,16 +436,16 @@ class UpdateStrapiService extends BaseService {
       return Promise.resolve()
     }
 
-    return await this.deleteEntryInStrapi("products", data.id)
+    return await this.deleteEntryInStrapi(this.options_.strapi_product_collection_name, data.id)
   }
 
   async deleteProductVariantInStrapi(data) {
-    const hasType = await this.getType("product-variants")
-      .then(() => true)
-      .catch((err) => {
-        // console.log(err)
-        return false
-      })
+    const hasType = await this.getType(this.options_.strapi_product_variant_collection_name)
+        .then(() => true)
+        .catch((err) => {
+          // console.log(err)
+          return false
+        })
     if (!hasType) {
       return Promise.resolve()
     }
@@ -455,7 +455,7 @@ class UpdateStrapiService extends BaseService {
       return Promise.resolve()
     }
 
-    return await this.deleteEntryInStrapi("product-variants", data.id)
+    return await this.deleteEntryInStrapi(this.options_.strapi_product_variant_collection_name, data.id)
   }
 
   // Blocker - Delete Region API
@@ -483,20 +483,20 @@ class UpdateStrapiService extends BaseService {
     }
     console.log("Checking strapi Health")
     return axios(config)
-      .then((res) => {
-        if (res.status === 204) {
-          console.log("\n Strapi Health Check OK \n")
-        }
-        return true
-      })
-      .catch((error) => {
-        if (error.code === "ECONNREFUSED") {
-          console.error(
-            "\nCould not connect to strapi. Please make sure strapi is running.\n"
-          )
-        }
-        return false
-      })
+        .then((res) => {
+          if (res.status === 204) {
+            console.log("\n Strapi Health Check OK \n")
+          }
+          return true
+        })
+        .catch((error) => {
+          if (error.code === "ECONNREFUSED") {
+            console.error(
+                "\nCould not connect to strapi. Please make sure strapi is running.\n"
+            )
+          }
+          return false
+        })
   }
 
   async loginToStrapi() {
@@ -509,19 +509,19 @@ class UpdateStrapiService extends BaseService {
       },
     }
     return axios(config)
-      .then((res) => {
-        if (res.data.jwt) {
-          this.strapiAuthToken = res.data.jwt
-          console.log("\n Successfully logged in to Strapi \n")
-          return true
-        }
-        return false
-      })
-      .catch((error) => {
-        if (error) {
-          throw new Error("\nError while trying to login to strapi\n"+error)
-        }
-      })
+        .then((res) => {
+          if (res.data.jwt) {
+            this.strapiAuthToken = res.data.jwt
+            console.log("\n Successfully logged in to Strapi \n")
+            return true
+          }
+          return false
+        })
+        .catch((error) => {
+          if (error) {
+            throw new Error("\nError while trying to login to strapi\n"+error)
+          }
+        })
   }
 
   async createEntryInStrapi(type, id, data) {
@@ -537,20 +537,20 @@ class UpdateStrapiService extends BaseService {
       data,
     }
     return axios(config)
-      .then((res) => {
-        if (res.data.result) {
-          this.addIgnore_(id, "medusa")
-          return res.data.data
-        }
-        return null
-      })
-      .catch(async (error) => {
-        if (error && error.response && error.response.status) {
-          throw new Error(
-            "Error while trying to create entry in strapi - " + type
-          )
-        }
-      })
+        .then((res) => {
+          if (res.data.result) {
+            this.addIgnore_(id, "medusa")
+            return res.data.data
+          }
+          return null
+        })
+        .catch(async (error) => {
+          if (error && error.response && error.response.status) {
+            throw new Error(
+                "Error while trying to create entry in strapi - " + type
+            )
+          }
+        })
   }
 
   async updateEntryInStrapi(type, id, data) {
@@ -566,18 +566,18 @@ class UpdateStrapiService extends BaseService {
       data,
     }
     return axios(config)
-      .then((res) => {
-        if (res.data.result) {
-          this.addIgnore_(id, "medusa")
-          return res.data.data
-        }
-        return null
-      })
-      .catch(async (error) => {
-        if (error && error.response && error.response.status) {
-          throw new Error("Error while trying to update entry in strapi ")
-        }
-      })
+        .then((res) => {
+          if (res.data.result) {
+            this.addIgnore_(id, "medusa")
+            return res.data.data
+          }
+          return null
+        })
+        .catch(async (error) => {
+          if (error && error.response && error.response.status) {
+            throw new Error("Error while trying to update entry in strapi ")
+          }
+        })
   }
 
   async deleteEntryInStrapi(type, id) {
@@ -592,17 +592,17 @@ class UpdateStrapiService extends BaseService {
       },
     }
     return axios(config)
-      .then((res) => {
-        if (res.data.result) {
-          return res.data.data
-        }
-        return null
-      })
-      .catch(async (error) => {
-        if (error && error.response && error.response.status) {
-          throw new Error("Error while trying to delete entry in strapi ")
-        }
-      })
+        .then((res) => {
+          if (res.data.result) {
+            return res.data.data
+          }
+          return null
+        })
+        .catch(async (error) => {
+          if (error && error.response && error.response.status) {
+            throw new Error("Error while trying to delete entry in strapi ")
+          }
+        })
   }
 
   async doesEntryExistInStrapi(type, id) {
@@ -618,13 +618,13 @@ class UpdateStrapiService extends BaseService {
     }
 
     return axios(config)
-      .then((res) => {
-        return true
-      })
-      .catch((error) => {
-        console.log(error.response.status, id)
-        throw new Error("Given entry doesn't exist in Strapi")
-      })
+        .then((res) => {
+          return true
+        })
+        .catch((error) => {
+          console.log(error.response.status, id)
+          throw new Error("Given entry doesn't exist in Strapi")
+        })
   }
 }
 
